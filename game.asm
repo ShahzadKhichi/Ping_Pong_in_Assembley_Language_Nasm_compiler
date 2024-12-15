@@ -8,16 +8,19 @@ intstruct3:db     '3. The player that will make 5 score first is the winner of g
 intstruct4:db     '4. Increment of score will happen if opponent miss the ball from his/her side  ',0
 intstruct5:db     '5. To pause or unpause the Game  at any moment you can press p  ',0
 intstruct6:db     '6. To Exit the Game at  any moment press ESC (expect pause moment)',0
+intstruct7:db     'Ali Naqi(23F-3052), Shahzad(23F-3012), Wijdan Hyder(23F-3024)',0
 continue :db      '                      Press any key to start the Game',0
-player1:db        'Player 1 won the Game ',0
-player2:db        'Player 2 won the Game ',0
+player1:db        'Ali Naqi won the Game ',0
+player2:db        'Shahzad won the Game ',0
 scorestr:db       'Score : ',0
+pauseStr:db       'Game Paused',0
+unpauseStr:db     '           ',0
 lenth:dw 0
 score1:dw 0
 score2:dw 0
-p1:db 'Player 1',0
-p2:db 'player 2',0
-
+p1:db 'Ali Naqi',0
+p2:db 'Shahzad',0
+winScore:dw 5
 leftPaddle: dw 1950,2110,2270
 rightPaddle:dw 2046,2206,2366
 Walls:dw 506,610,346,3706
@@ -148,6 +151,12 @@ intialLoader:
     mov ax,1600
     push ax
     mov ax,continue
+    push ax
+    call printstr
+	
+    mov ax,1780
+    push ax
+    mov ax,intstruct7
     push ax
     call printstr
 
@@ -353,6 +362,7 @@ moveBall:
     mov cx,0x0720
     
 mover:
+    
     mov word[es:di],cx
     add di,dx
     mov cx,[es:di]
@@ -422,6 +432,8 @@ mover:
     call printScore
     call checkWinner
   
+
+
     cmp word[boolExit],0
     jz mover
   
@@ -436,6 +448,8 @@ mover:
 delay:
     push cx
     push ax
+
+
     mov ax,5
 delayMaker:
     mov cx,0xFFFF
@@ -454,8 +468,7 @@ detectPaddleMove:
     push ax
     push bx
     push di
-
-
+    
     mov ah,1
     int 0x16
     jz return
@@ -466,7 +479,6 @@ detectPaddleMove:
     cmp ax,0x011b
     jne checkW
     mov word[boolExit],1
-    jmp return
    
 checkW:    
     cmp al,0x77
@@ -511,17 +523,32 @@ checkDown:
     jge return
     push bx
     call paddleDown
-   
+  
+return:
+
 checkPause:
     cmp al,0x70
-    jne return
+    jne exitFun
+
+    mov bx,60
+    push bx
+    mov bx,pauseStr
+    push bx
+    call printstr
 pauseLoop:
     mov ah,0
     int 0x16
     cmp al,0x70
+
     jne pauseLoop
 
-return:
+    mov bx,60
+    push bx
+    mov bx,unpauseStr
+    push bx
+    call printstr
+exitFun:    
+
     pop di
     pop bx
     pop ax
@@ -719,9 +746,10 @@ hitLeftRightBrick:
     inc ax
     mov [bx],ax
 
+    
 nohitLeftRightBrick:
-
     sub di,dx
+
     pop ax
     pop cx
     pop si
@@ -731,8 +759,10 @@ nohitLeftRightBrick:
 
 checkWinner:
     push ax
+    push bx
 
-    cmp word[score1],5
+    mov bx,word[winScore]
+    cmp word[score1],bx
     jl nextCompare
     mov word[boolExit],1
 
@@ -742,8 +772,9 @@ checkWinner:
     push ax
     call printstr
 
+
 nextCompare:
-    cmp word[score2],5
+    cmp word[score2],bx
     jl noWinner
     mov word[boolExit],1
     mov ax,2134
@@ -754,11 +785,15 @@ nextCompare:
 
 noWinner:
     pop ax
+    pop bx
     ret;
+
 
 start:
     
+
     call intialLoader
+
     int 0x16
     call cls
     call printGround
